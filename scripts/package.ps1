@@ -1,10 +1,15 @@
-# Packages a release zip: exe + assets + model downloader + README.
+# Packages a release zip: exe + runtime DLLs + model + assets + README.
 $ErrorActionPreference = 'Stop'
 $out = 'release\speakerscope-win-x64'
 Remove-Item -Recurse -Force $out -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Force -Path $out | Out-Null
+New-Item -ItemType Directory -Force -Path "$out\models" | Out-Null
 
-Copy-Item build\speakerscope.exe $out\
+$build = 'build-msvc'
+Copy-Item "$build\speakerscope.exe" $out\
+Copy-Item "$build\audiocpp.dll", "$build\fmt.dll", "$build\glfw3.dll",
+         "$build\spdlog.dll", "$build\zlib1.dll" $out\
+Copy-Item "models\nemotron-3-diarization-q8_0.gguf" "$out\models\"
 Copy-Item -Recurse assets $out\ -ErrorAction SilentlyContinue
 Copy-Item scripts\download_models.ps1 $out\
 Copy-Item .env.example $out\
