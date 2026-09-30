@@ -1,0 +1,19 @@
+{
+    "name": "speakerscope",
+    "version-string": "0.1.0",
+    "dependencies": [
+        {
+            "name": "ixwebsocket",
+            "features": ["ssl"]
+        },
+        "nlohmann-json",
+        "glfw3",
+        {
+            "name": "imgui",
+            "features": ["glfw-binding", "opengl3-binding", "docking-experimental"]
+        },
+        "spdlog",
+        "miniaudio",
+        "gtest"
+    ]
+}
