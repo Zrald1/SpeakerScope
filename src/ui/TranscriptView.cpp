@@ -7,6 +7,18 @@
 
 namespace ss {
 
+namespace {
+
+std::string tsString(uint64_t ms) {
+    char buf[16];
+    std::snprintf(buf, sizeof buf, "%02llu:%02llu",
+                  (unsigned long long)(ms / 60000),
+                  (unsigned long long)((ms / 1000) % 60));
+    return buf;
+}
+
+} // namespace
+
 std::string TranscriptView::joinForCopy(
     const std::vector<AttributedSegment>& segs,
     const SpeakerRegistry& registry, int filter) {
@@ -24,9 +36,9 @@ std::string TranscriptView::joinForCopy(
 void TranscriptView::render(const std::vector<AttributedSegment>& segments,
                             SpeakerRegistry& registry) {
     // --- Toolbar: filter combo + copy button --------------------------
-    ImGui::TextUnformatted("Show:");
+    ImGui::TextColored(theme::kMuted, "Show:");
     ImGui::SameLine();
-    ImGui::SetNextItemWidth(160);
+    ImGui::SetNextItemWidth(170);
     if (ImGui::BeginCombo("##filter",
                         filter_ < 0 ? "Everyone"
                                     : registry.name(filter_).c_str())) {
@@ -52,41 +64,64 @@ void TranscriptView::render(const std::vector<AttributedSegment>& segments,
             joinForCopy(segments, registry, filter_).c_str());
     }
     ImGui::SameLine();
-    ImGui::TextDisabled("(edit names in the lanes above)");
+    ImGui::TextDisabled("rename people in the lanes above");
 
+    ImGui::Spacing();
     ImGui::Separator();
+    ImGui::Spacing();
 
     // --- Scrolling transcript ------------------------------------------
-    ImGui::BeginChild("transcript", ImVec2(0, 0), true,
+    ImGui::BeginChild("transcript", ImVec2(0, 0), false,
                       ImGuiWindowFlags_AlwaysVerticalScrollbar);
+    ImDrawList* dl = ImGui::GetWindowDrawList();
 
     bool any = false;
     for (const auto& seg : segments) {
         if (filter_ >= 0 && seg.speaker != filter_) continue;
         any = true;
 
-        ImVec4 col = seg.partial ? theme::kPartial
-                                 : (seg.speaker >= 0
-                                        ? theme::speakerColor(
-                                              registry.color(seg.speaker))
-                                        : ImVec4(0.9f, 0.9f, 0.92f, 1.f));
+        // Timestamp gutter.
+        ImGui::TextColored(theme::kFaint, "%s", tsString(seg.start_ms).c_str());
+        ImGui::SameLine(52);
 
         if (seg.speaker >= 0) {
-            ImGui::TextColored(col, "[%s]",
-                               registry.name(seg.speaker).c_str());
+            // Speaker chip: tinted pill + colored name.
+            ImVec4 col = theme::speakerColor(registry.color(seg.speaker));
+            const std::string nm = registry.name(seg.speaker);
+            const ImVec2 tsz = ImGui::CalcTextSize(nm.c_str());
+            ImVec2 chip_p = ImGui::GetCursorScreenPos();
+            dl->AddRectFilled(
+                chip_p, ImVec2(chip_p.x + tsz.x + 14,
+                               chip_p.y + tsz.y + 6),
+                ImGui::ColorConvertFloat4ToU32(
+                    ImVec4(col.x, col.y, col.z, seg.partial ? 0.10f : 0.22f)),
+                tsz.y * 0.5f + 3.f);
+            ImGui::SetCursorPosX(ImGui::GetCursorPosX() + 7);
+            ImGui::TextColored(ImVec4(col.x, col.y, col.z,
+                                      seg.partial ? 0.7f : 1.f),
+                               "%s", nm.c_str());
+            ImGui::SameLine(0, 13);
+        } else {
+            ImGui::TextColored(theme::kMuted, "[?]");
             ImGui::SameLine(0, 6);
         }
+
+        ImVec4 col = seg.partial ? theme::kPartial
+                                 : (seg.speaker >= 0
+                                        ? theme::kText
+                                        : ImVec4(0.85f, 0.85f, 0.87f, 1.f));
         ImGui::PushTextWrapPos(0.f);
         ImGui::TextColored(col, "%s", seg.text.c_str());
         ImGui::PopTextWrapPos();
         if (seg.overlap) {
             ImGui::SameLine(0, 8);
-            ImGui::TextColored(theme::kOverlap, "(overlap)");
+            ImGui::TextColored(theme::kOverlap, "overlap");
         }
         ImGui::Spacing();
     }
 
     if (!any) {
+        ImGui::Spacing();
         ImGui::TextDisabled(filter_ < 0
                                 ? "Transcript will appear here.\nPick a "
                                   "source on the left and press Start."

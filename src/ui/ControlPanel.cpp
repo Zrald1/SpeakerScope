@@ -63,7 +63,7 @@ void ControlPanel::render(SessionController& session, bool api_key_present) {
     const SessionState st = session.state();
     const bool running = st == SessionState::Live || st == SessionState::Connecting;
 
-    ImGui::TextUnformatted("AUDIO SOURCE");
+    ImGui::TextColored(theme::kMuted, "AUDIO SOURCE");
     ImGui::Spacing();
 
     int sel = static_cast<int>(source_);
@@ -86,33 +86,47 @@ void ControlPanel::render(SessionController& session, bool api_key_present) {
     ImGui::Spacing();
 
     if (!api_key_present)
-        ImGui::TextColored(theme::kOverlap,
+        ImGui::TextColored(theme::kDanger,
                            "ASSEMBLYAI_API_KEY missing\n(set it in .env)");
 
+    // Primary action — solid accent.
+    ImGui::PushStyleColor(ImGuiCol_Button, theme::kAccentDim);
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, theme::kAccent);
     ImGui::BeginDisabled(running || !api_key_present);
-    if (ImGui::Button("START SESSION", ImVec2(-1, 40)))
+    if (ImGui::Button("START SESSION", ImVec2(-1, 44)))
         session.start(Config::load(), source_, wav_path_);
     ImGui::EndDisabled();
+    ImGui::PopStyleColor(2);
 
+    ImGui::PushStyleColor(ImGuiCol_Button, theme::kDangerDim);
+    ImGui::PushStyleColor(ImGuiCol_ButtonHovered, theme::kDanger);
     ImGui::BeginDisabled(!running);
-    if (ImGui::Button("STOP", ImVec2(-1, 32))) session.stop();
+    if (ImGui::Button("STOP", ImVec2(-1, 36))) session.stop();
     ImGui::EndDisabled();
-
-    ImGui::Spacing();
-    ImGui::TextDisabled("Status: %s", session.statusLine().c_str());
-    ImGui::TextDisabled("Elapsed: %.1f s", session.elapsedMs() / 1000.0);
-    ImGui::TextDisabled("Speakers seen: %d", session.registry().speakerCount());
+    ImGui::PopStyleColor(2);
 
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Spacing();
 
+    ImGui::TextColored(theme::kMuted, "SESSION");
+    ImGui::Spacing();
+    ImGui::TextDisabled("Status:   %s", session.statusLine().c_str());
+    ImGui::TextDisabled("Elapsed:  %.1f s", session.elapsedMs() / 1000.0);
+    ImGui::TextDisabled("Speakers: %d", session.registry().speakerCount());
+
+    ImGui::Spacing();
+    ImGui::Separator();
+    ImGui::Spacing();
+
+    ImGui::TextColored(theme::kMuted, "EXPORT");
+    ImGui::Spacing();
     ImGui::BeginDisabled(session.transcript().finalizedTurns().empty());
     if (ImGui::Button("Export .txt (all + per person)", ImVec2(-1, 0)))
         last_export_ = exportTranscript(session);
     ImGui::EndDisabled();
     if (!last_export_.empty())
-        ImGui::TextDisabled("Saved: %s*.txt", last_export_.c_str());
+        ImGui::TextDisabled("Saved:\n%s*.txt", last_export_.c_str());
 }
 
 } // namespace ss

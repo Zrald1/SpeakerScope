@@ -26,13 +26,59 @@ AppWindow::AppWindow(int width, int height, const char* title) {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGui::StyleColorsDark();
+
+    // Typography: Segoe UI on Windows; ImGui default as fallback.
+    ImGuiIO& io = ImGui::GetIO();
+    if (auto* f = io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/segoeui.ttf",
+                                             17.0f))
+        io.FontDefault = f;
+    title_font_ = io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/segoeuib.ttf",
+                                               22.0f);
+    small_font_ = io.Fonts->AddFontFromFileTTF("C:/Windows/Fonts/segoeui.ttf",
+                                               14.0f);
+
     ImGuiStyle& s = ImGui::GetStyle();
-    s.WindowRounding = 6.f;
-    s.FrameRounding = 4.f;
-    s.Colors[ImGuiCol_WindowBg] = theme::kBg;
-    s.Colors[ImGuiCol_ChildBg] = theme::kPanel;
-    s.Colors[ImGuiCol_Button] = ImVec4(0.18f, 0.32f, 0.45f, 1.f);
-    s.Colors[ImGuiCol_ButtonHovered] = theme::kAccent;
+    s.WindowRounding = 12.f;
+    s.ChildRounding = 10.f;
+    s.FrameRounding = 7.f;
+    s.PopupRounding = 8.f;
+    s.ScrollbarRounding = 8.f;
+    s.GrabRounding = 7.f;
+    s.TabRounding = 6.f;
+    s.WindowPadding = ImVec2(16, 14);
+    s.FramePadding = ImVec2(10, 6);
+    s.ItemSpacing = ImVec2(10, 8);
+    s.ItemInnerSpacing = ImVec2(8, 6);
+    s.ScrollbarSize = 11.f;
+    s.WindowBorderSize = 0.f;
+    s.ChildBorderSize = 1.f;
+    s.FrameBorderSize = 0.f;
+    s.PopupBorderSize = 1.f;
+
+    auto* c = s.Colors;
+    c[ImGuiCol_WindowBg] = theme::kBg;
+    c[ImGuiCol_ChildBg] = theme::kPanel;
+    c[ImGuiCol_PopupBg] = theme::kPanelAlt;
+    c[ImGuiCol_Border] = ImVec4(theme::kBorder.x, theme::kBorder.y,
+                                theme::kBorder.z, 0.55f);
+    c[ImGuiCol_Text] = theme::kText;
+    c[ImGuiCol_TextDisabled] = theme::kMuted;
+    c[ImGuiCol_FrameBg] = theme::kTrack;
+    c[ImGuiCol_FrameBgHovered] = theme::kPanelAlt;
+    c[ImGuiCol_FrameBgActive] = theme::kPanelAlt;
+    c[ImGuiCol_Button] = theme::kAccentDim;
+    c[ImGuiCol_ButtonHovered] = theme::kAccent;
+    c[ImGuiCol_ButtonActive] = ImVec4(0.15f, 0.55f, 0.62f, 1.f);
+    c[ImGuiCol_CheckMark] = theme::kAccent;
+    c[ImGuiCol_SliderGrab] = theme::kAccent;
+    c[ImGuiCol_Header] = theme::kAccentDim;
+    c[ImGuiCol_HeaderHovered] = theme::kAccentSoft;
+    c[ImGuiCol_HeaderActive] = theme::kAccentSoft;
+    c[ImGuiCol_Separator] = theme::kBorder;
+    c[ImGuiCol_ScrollbarBg] = ImVec4(0, 0, 0, 0);
+    c[ImGuiCol_ScrollbarGrab] = ImVec4(0.30f, 0.33f, 0.38f, 0.8f);
+    c[ImGuiCol_ScrollbarGrabHovered] = ImVec4(0.38f, 0.42f, 0.48f, 0.9f);
+    c[ImGuiCol_TitleBgActive] = theme::kAccentDim;
 
     ImGui_ImplGlfw_InitForOpenGL(window_, true);
     ImGui_ImplOpenGL3_Init("#version 330");
