@@ -86,8 +86,10 @@ Working title **SpeakerScope**. Tagline: *"Every voice, attributed."*
 |---|---|---|---|
 | Build | CMake 3.26+, MSVC 2022, vcpkg manifest | Standard Windows C++ | FetchContent-only |
 | Audio capture | **miniaudio** (single header) | Mic + WASAPI **loopback** in one lib, tiny | PortAudio/RtAudio |
-| Diarization runtime | **NeMo-Speech.cpp** (official NVIDIA C++ ggml runtime) — `nvidia/nemotron` GGUF family | Pure C++, official, streaming mode, CPU+CUDA | `audio.cpp` (community, `audio-cpp/Nemotron-3-Diarization-GGUF`) → last resort: Python NeMo sidecar over localhost gRPC |
-| Diarization weights | `nemotron-3-diarization-bf16.gguf` (189 MB) or `-q8_0.gguf` (102 MB) | OpenMDW-1.1 license, redistributable | `.nemo` via NeMo sidecar |
+| Diarization runtime | **audio.cpp** (`nemotron_3_diar` GGUF family, streaming mode) | Only C++ runtime that runs the actual 8-speaker Nemotron-3 today | NeMo-Speech.cpp — official NVIDIA, but currently ships **Sortformer 4-spk** only (no Nemotron-3 yet); Python NeMo sidecar as last resort |
+| Diarization weights | `nemotron-3-diarization-bf16.gguf` (189 MB) or `-q8_0.gguf` (102 MB) | OpenMDW-1.1 license, redistributable | `sortformer-v2` GGUF (4-spk) via NeMo-Speech.cpp |
+| Global speaker ID (>8 ppl) | **TitaNet-Large GGUF** embedding + online centroid clustering | NVIDIA embedding model, 192-d, CC-BY-4.0, native C++ via gguf | WeSpeaker ResNet34 ONNX via onnxruntime |
+
 | WebSocket | **IXWebSocket** | Header-lib-quality, TLS, binary frames, ping/pong | Boost.Beast |
 | JSON | nlohmann/json | Standard | — |
 | HTTP (token fetch) | cpr or cpp-httplib | Temp auth tokens | — |
@@ -104,7 +106,7 @@ Working title **SpeakerScope**. Tagline: *"Every voice, attributed."*
 ## 4. Decision points (need your call before coding)
 
 1. **UI toolkit — Dear ImGui (recommended) vs Qt6.** ImGui = faster to build, single exe, gamer-style look; Qt6 = native polish, heavier install. *Recommendation: ImGui for the deadline.*
-2. **Diarization backend — NeMo-Speech.cpp (recommended) vs audio.cpp vs Python sidecar.** Build the `DiarizationEngine` interface so backends are swappable. *Recommendation: try NeMo-Speech.cpp first, audio.cpp second; keep a `WavFileDiarizer` test double regardless.*
+2. **Diarization backend — audio.cpp (decided: only it runs Nemotron-3's 8-speaker GGUF; NeMo-Speech.cpp has Sortformer-4spk only).** `DiarizationEngine` interface keeps backends swappable; `WavFileDiarizer` test double exists. **Unlimited speakers:** see `docs/SPEAKERS.md` — Nemotron is a ≤8-*concurrent* limit; a TitaNet embedding + online clustering stage (`GlobalSpeakerResolver`, implemented+tested) maps local channels to unlimited global persons.
 3. **Voice-agent stretch goal** — only after MVP ships (see §7).
 4. **Interpretation check:** I read "multiple OJUMP" as **multiple speakers / people jumping into a conversation** — i.e., multi-speaker detection incl. overlaps. Correct me if you meant something else.
 

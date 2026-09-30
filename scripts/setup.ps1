@@ -1,6 +1,10 @@
 # SpeakerScope build setup (Windows)
 $ErrorActionPreference = 'Stop'
 
+# Enter the VS dev shell so CMake picks cl.exe (MSVC) — tested working config.
+$vsShell = 'C:\Program Files\Microsoft Visual Studio\18\Community\Common7\Tools\Launch-VsDevShell.ps1'
+if (Test-Path $vsShell) { & $vsShell -Arch amd64 -SkipAutomaticLocation | Out-Null }
+
 $VcpkgRoot = if ($env:VCPKG_ROOT) { $env:VCPKG_ROOT } else { 'C:\vcpkg' }
 $Toolchain = Join-Path $VcpkgRoot 'scripts\buildsystems\vcpkg.cmake'
 
