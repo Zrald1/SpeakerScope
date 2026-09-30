@@ -1,0 +1,85 @@
+{
+  "tests": 11,
+  "name": "AllTests",
+  "testsuites": [
+    {
+      "name": "SpeakerTimeline",
+      "tests": 4,
+      "testsuite": [
+        {
+          "name": "DominantSpeaker",
+          "file": "C:\\Users\\Zrald\\hackathonforassembly\\tests\\test_speaker_timeline.cpp",
+          "line": 18
+        },
+        {
+          "name": "OverlapCount",
+          "file": "C:\\Users\\Zrald\\hackathonforassembly\\tests\\test_speaker_timeline.cpp",
+          "line": 26
+        },
+        {
+          "name": "MaterializesTurnsAndMergesGaps",
+          "file": "C:\\Users\\Zrald\\hackathonforassembly\\tests\\test_speaker_timeline.cpp",
+          "line": 39
+        },
+        {
+          "name": "DropsShortBlips",
+          "file": "C:\\Users\\Zrald\\hackathonforassembly\\tests\\test_speaker_timeline.cpp",
+          "line": 52
+        }
+      ]
+    },
+    {
+      "name": "SpeakerAttributor",
+      "tests": 3,
+      "testsuite": [
+        {
+          "name": "AssignsWordsToSpeakers",
+          "file": "C:\\Users\\Zrald\\hackathonforassembly\\tests\\test_attributor.cpp",
+          "line": 31
+        },
+        {
+          "name": "UnknownWhenNoDiarization",
+          "file": "C:\\Users\\Zrald\\hackathonforassembly\\tests\\test_attributor.cpp",
+          "line": 47
+        },
+        {
+          "name": "FlagsOverlap",
+          "file": "C:\\Users\\Zrald\\hackathonforassembly\\tests\\test_attributor.cpp",
+          "line": 56
+        }
+      ]
+    },
+    {
+      "name": "TranscriptBuffer",
+      "tests": 1,
+      "testsuite": [
+        {
+          "name": "PartialThenFinal",
+          "file": "C:\\Users\\Zrald\\hackathonforassembly\\tests\\test_transcript_buffer.cpp",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "name": "StreamingMessages",
+      "tests": 3,
+      "testsuite": [
+        {
+          "name": "ParsesTurnWithWords",
+          "file": "C:\\Users\\Zrald\\hackathonforassembly\\tests\\test_transcript_buffer.cpp",
+          "line": 25
+        },
+        {
+          "name": "ParsesBegin",
+          "file": "C:\\Users\\Zrald\\hackathonforassembly\\tests\\test_transcript_buffer.cpp",
+          "line": 42
+        },
+        {
+          "name": "BadJsonIsUnknown",
+          "file": "C:\\Users\\Zrald\\hackathonforassembly\\tests\\test_transcript_buffer.cpp",
+          "line": 49
+        }
+      ]
+    }
+  ]
+}

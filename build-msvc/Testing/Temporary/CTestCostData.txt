@@ -1,0 +1,12 @@
+SpeakerTimeline.DominantSpeaker 1 0.0131795
+SpeakerTimeline.OverlapCount 1 0.0130822
+SpeakerTimeline.MaterializesTurnsAndMergesGaps 1 0.0112315
+SpeakerTimeline.DropsShortBlips 1 0.0108631
+SpeakerAttributor.AssignsWordsToSpeakers 1 0.0118339
+SpeakerAttributor.UnknownWhenNoDiarization 1 0.0126484
+SpeakerAttributor.FlagsOverlap 1 0.012058
+TranscriptBuffer.PartialThenFinal 1 0.0101954
+StreamingMessages.ParsesTurnWithWords 1 0.0122291
+StreamingMessages.ParsesBegin 1 0.0109453
+StreamingMessages.BadJsonIsUnknown 1 0.0112293
+---

@@ -20,8 +20,8 @@ void initLogger() {
         "speakerscope", spdlog::sinks_init_list{console, file});
     logger->set_level(spdlog::level::debug);
     logger->set_pattern("[%H:%M:%S.%e] [%l] [%t] %v");
-    spdlog::set_default_logger(logger);
-    spdlog::register_logger(logger);
+    // set_default_logger already registers it under "speakerscope".
+    spdlog::set_default_logger(std::move(logger));
 }
 
 } // namespace ss
