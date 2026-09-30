@@ -1,5 +1,0 @@
-if(EXISTS "C:/Users/Zrald/hackathonforassembly/build-msvc/tests/speakerscope_tests[1]_tests.cmake")
-  include("C:/Users/Zrald/hackathonforassembly/build-msvc/tests/speakerscope_tests[1]_tests.cmake")
-else()
-  add_test(speakerscope_tests_NOT_BUILT speakerscope_tests_NOT_BUILT)
-endif()

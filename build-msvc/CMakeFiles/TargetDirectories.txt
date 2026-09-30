@@ -1,9 +1,0 @@
-C:/Users/Zrald/hackathonforassembly/build-msvc/CMakeFiles/speakerscope_core.dir
-C:/Users/Zrald/hackathonforassembly/build-msvc/CMakeFiles/speakerscope.dir
-C:/Users/Zrald/hackathonforassembly/build-msvc/CMakeFiles/test.dir
-C:/Users/Zrald/hackathonforassembly/build-msvc/CMakeFiles/edit_cache.dir
-C:/Users/Zrald/hackathonforassembly/build-msvc/CMakeFiles/rebuild_cache.dir
-C:/Users/Zrald/hackathonforassembly/build-msvc/tests/CMakeFiles/speakerscope_tests.dir
-C:/Users/Zrald/hackathonforassembly/build-msvc/tests/CMakeFiles/test.dir
-C:/Users/Zrald/hackathonforassembly/build-msvc/tests/CMakeFiles/edit_cache.dir
-C:/Users/Zrald/hackathonforassembly/build-msvc/tests/CMakeFiles/rebuild_cache.dir

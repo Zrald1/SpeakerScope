@@ -1,4 +1,5 @@
-build*/
+build/
+build-*/
 out/
 vcpkg_installed/
 models/

@@ -1,8 +1,0 @@
-{
-	"InstallScripts" : 
-	[
-		"C:/Users/Zrald/hackathonforassembly/build-msvc/cmake_install.cmake",
-		"C:/Users/Zrald/hackathonforassembly/build-msvc/tests/cmake_install.cmake"
-	],
-	"Parallel" : false
-}
