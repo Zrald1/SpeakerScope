@@ -1,8 +1,9 @@
 // Headless pipeline simulator.
 //   speakerscope_sim <wav> [gold.json]
-// Streams the wav through AssemblyAI v3 for real; if gold.json is given,
-// replays its speaker turns through WavFileDiarizer so the fused,
-// speaker-attributed transcript is exercised end-to-end without the model.
+// Streams the wav through AssemblyAI v3 for real. If gold.json is given,
+// replays its speaker turns through WavFileDiarizer; otherwise the real
+// NemotronDiarizer (audio.cpp + models/nemotron-3-diarization-q8_0.gguf)
+// runs on-device against the same audio.
 
 #include <chrono>
 #include <fstream>

@@ -25,6 +25,10 @@ public:
     explicit SpeakerTimeline(Options opts) : opts_(opts) {}
 
     void addFrame(const ActivityFrame& f);  // called from diarization worker
+    // Direct-turn path for engines that report decoded SpeakerTurns rather
+    // than prob frames (audio.cpp nemotron_3_diar). Inserts sorted; merges
+    // same-speaker turns within merge_gap_ms. Safe for late-arriving turns.
+    void addTurn(const SpeakerTurn& t);
     void clear();
 
     // Query API (any thread)

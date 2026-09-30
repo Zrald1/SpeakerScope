@@ -1,5 +1,6 @@
 #include "app/SessionController.h"
 
+#include <algorithm>
 #include <chrono>
 #include "core/Clock.h"
 #include "core/Config.h"
@@ -35,11 +36,16 @@ bool SessionController::start(const Config& cfg, AudioSourceType src,
     diar_->setActivityCallback([this](const ActivityFrame& f) {
         timeline_.addFrame(f);
     });
+    diar_->setTurnCallback([this](const SpeakerTurn& t) {
+        timeline_.addTurn(t);
+    });
 
     stt_.connect(cfg, [this](const ServerEvent& ev) { onServerEvent(ev); });
     source_->start();
 
     sender_thread_ = std::thread(&SessionController::senderLoop, this);
+    if (diar_ && diar_->isReady())
+        diar_thread_ = std::thread(&SessionController::diarLoop, this);
     return true;
 }
 
@@ -47,9 +53,12 @@ void SessionController::stop() {
     if (state_.load() == SessionState::Idle) return;
     stop_.store(true);
     if (sender_thread_.joinable()) sender_thread_.join();
-    if (source_) { source_->stop(); source_.reset(); }
+    // Close the STT socket before draining the diar backlog — AssemblyAI
+    // bills while the session is open, and the drain can take a while.
     stt_.terminate();
-    diar_.reset();
+    if (diar_thread_.joinable()) diar_thread_.join();
+    if (source_) { source_->stop(); source_.reset(); }
+    if (diar_) { diar_->finish(); diar_.reset(); }
     state_.store(SessionState::Idle);
     log()->info("Session stopped");
 }
@@ -98,10 +107,29 @@ void SessionController::senderLoop() {
             continue;
         }
         size_t got = ring_.pop(chunk.data(), kChunkSamples);
-        const uint64_t first_ms = samplesToMs(samples_sent_.load());
         stt_.sendAudio(chunk.data(), got);
-        if (diar_) diar_->pushAudio(chunk.data(), got, first_ms);
+        // Tee into the diarization queue (non-blocking; truncates when full).
+        if (diar_ && diar_thread_.joinable())
+            ring_diar_.push(chunk.data(), got);
         samples_sent_.fetch_add(got);
+    }
+}
+
+void SessionController::diarLoop() {
+    std::vector<int16_t> chunk(kSampleRate); // up to 1 s per push
+    // Drain on exit too — stop() must not strand queued audio that the model
+    // hasn't seen, or tail turns never materialize.
+    while (true) {
+        const size_t avail = ring_diar_.available();
+        if (avail == 0 && stop_.load()) break;
+        if (avail < kChunkSamples && !stop_.load()) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            continue;
+        }
+        if (avail == 0) break;
+        size_t got = ring_diar_.pop(chunk.data(), std::min(avail, chunk.size()));
+        diar_->pushAudio(chunk.data(), got, samplesToMs(diar_samples_.load()));
+        diar_samples_.fetch_add(got);
     }
 }
 

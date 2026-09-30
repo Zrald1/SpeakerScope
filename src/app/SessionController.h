@@ -44,9 +44,15 @@ public:
 
 private:
     void senderLoop();
+    void diarLoop();
     void onServerEvent(const ServerEvent& ev);
 
     AudioRingBuffer ring_;
+    // Second consumer ring: senderLoop tees each chunk here and a dedicated
+    // thread feeds the diarizer, so slow CPU inference can never starve the
+    // realtime AssemblyAI stream. If diarization falls behind, this ring
+    // truncates and speaker labels lag/drift — STT is unaffected.
+    AudioRingBuffer ring_diar_{16000 * 300}; // 5 min cushion
     std::unique_ptr<AudioSource> source_;
     AssemblyAIClient stt_;
     std::unique_ptr<DiarizationEngine> diar_;
@@ -56,8 +62,10 @@ private:
     SpeakerRegistry registry_;
 
     std::thread sender_thread_;
+    std::thread diar_thread_;
     std::atomic<bool> stop_{false};
     std::atomic<uint64_t> samples_sent_{0};
+    std::atomic<uint64_t> diar_samples_{0};
     std::atomic<SessionState> state_{SessionState::Idle};
     std::string error_;
 };

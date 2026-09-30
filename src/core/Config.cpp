@@ -63,6 +63,20 @@ Config Config::load() {
     cfg.ws_endpoint = getenvOr(env, "AAI_WS_ENDPOINT", cfg.ws_endpoint);
     cfg.speech_model = getenvOr(env, "AAI_SPEECH_MODEL", cfg.speech_model);
     cfg.diar_model_path = getenvOr(env, "DIAR_MODEL_PATH", cfg.diar_model_path);
+    // Relative model paths resolve against the repo root even when the exe
+    // runs from a build dir — same upward walk as .env above.
+    if (!cfg.diar_model_path.empty() &&
+        !std::filesystem::exists(cfg.diar_model_path)) {
+        std::filesystem::path dir = std::filesystem::current_path();
+        for (int i = 0; i < 4; ++i) {
+            if (std::filesystem::exists(dir / cfg.diar_model_path)) {
+                cfg.diar_model_path = (dir / cfg.diar_model_path).string();
+                break;
+            }
+            if (!dir.has_parent_path()) break;
+            dir = dir.parent_path();
+        }
+    }
     return cfg;
 }
 

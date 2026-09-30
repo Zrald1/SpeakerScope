@@ -28,6 +28,14 @@ public:
     virtual void setActivityCallback(
         std::function<void(const ActivityFrame&)>) = 0;
 
+    // Engines that decode turns directly (audio.cpp emits closed turns, not
+    // prob frames) report them here instead. Default: unused.
+    virtual void setTurnCallback(
+        std::function<void(const SpeakerTurn&)>) {}
+
+    // Flush any in-flight state and emit final turns. Called on stop.
+    virtual void finish() {}
+
     virtual bool isReady() const { return true; }
 };
 
