@@ -25,8 +25,9 @@ bool WavFileSource::start() {
 }
 
 void WavFileSource::stop() {
-    if (!running_.load()) return;
     stop_.store(true);
+    // Join even when running_ is already false — a finished thread is still
+    // joinable, and destroying it would call std::terminate.
     if (thread_.joinable()) thread_.join();
     running_.store(false);
 }
@@ -48,24 +49,25 @@ void WavFileSource::run() {
 
     constexpr size_t kReadFrames = 4096;
     std::vector<int16_t> in(kReadFrames * src_ch);
-    auto next_emit = std::chrono::steady_clock::now();
+    const auto start_time = std::chrono::steady_clock::now();
     uint64_t emitted_ms = 0;
 
     while (!stop_.load()) {
         ma_uint64 got = 0;
-        if (ma_decoder_read_pcm_frames(&dec, in.data(), kReadFrames, &got) !=
-                MA_SUCCESS ||
-            got == 0) {
+        ma_result rr =
+            ma_decoder_read_pcm_frames(&dec, in.data(), kReadFrames, &got);
+        if (rr != MA_SUCCESS || got == 0) {
+            log()->info("WavFileSource: read ended (result={}, frames={})",
+                        static_cast<int>(rr), static_cast<uint64_t>(got));
             break; // EOF
         }
         auto out = resampler.process(in.data(), got);
         if (!out.empty()) {
             // Pace to real time so the streaming pipeline sees live-like input.
             emitted_ms += samplesToMs(out.size());
-            next_emit = std::chrono::steady_clock::now() +
-                        std::chrono::milliseconds(emitted_ms);
             sink_.push(out.data(), out.size());
-            std::this_thread::sleep_until(next_emit);
+            std::this_thread::sleep_until(
+                start_time + std::chrono::milliseconds(emitted_ms));
         }
     }
 

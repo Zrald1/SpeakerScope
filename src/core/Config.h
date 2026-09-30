@@ -8,7 +8,7 @@ namespace ss {
 struct Config {
     std::string api_key;
     std::string ws_endpoint = "wss://streaming.assemblyai.com/v3/ws";
-    std::string speech_model = "u3-rt-pro";
+    std::string speech_model = "universal-3-5-pro"; // u3-rt-pro if entitled
     int sample_rate = kSampleRate;
     int min_turn_silence_ms = 200;
     int max_turn_silence_ms = 1280;

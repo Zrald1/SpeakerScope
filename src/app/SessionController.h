@@ -25,11 +25,13 @@ public:
     ~SessionController();
 
     bool start(const Config& cfg, AudioSourceType src,
-               const std::string& wav_path = "");
+               const std::string& wav_path = "",
+               std::unique_ptr<DiarizationEngine> diar = {});
     void stop();
 
     SessionState state() const { return state_.load(); }
     std::string statusLine() const;
+    bool sourceRunning() const { return source_ && source_->isRunning(); }
 
     // Read models for the UI.
     const TranscriptBuffer& transcript() const { return transcript_; }

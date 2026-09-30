@@ -1,5 +1,6 @@
 #include "stt/AssemblyAIClient.h"
 
+#include <ixwebsocket/IXNetSystem.h>
 #include <ixwebsocket/IXWebSocket.h>
 
 #include <nlohmann/json.hpp>
@@ -29,6 +30,10 @@ AssemblyAIClient::AssemblyAIClient() = default;
 AssemblyAIClient::~AssemblyAIClient() { terminate(); }
 
 bool AssemblyAIClient::connect(const Config& cfg, EventCallback cb) {
+    // WSAStartup on Windows — required once before any socket use.
+    static const bool net_init = [] { ix::initNetSystem(); return true; }();
+    (void)net_init;
+
     if (cfg.api_key.empty()) {
         last_error_ = "ASSEMBLYAI_API_KEY not set";
         return false;

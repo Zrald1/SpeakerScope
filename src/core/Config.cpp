@@ -1,6 +1,7 @@
 #include "core/Config.h"
 
 #include <cstdlib>
+#include <filesystem>
 #include <fstream>
 #include <sstream>
 #include <unordered_map>
@@ -41,7 +42,21 @@ std::string getenvOr(const std::unordered_map<std::string, std::string>& file,
 
 Config Config::load() {
     Config cfg;
-    auto env = parseEnvFile(".env");
+    // .env may live in the repo root while the exe runs from build*/ —
+    // search up to 4 parent dirs.
+    std::unordered_map<std::string, std::string> env;
+    {
+        std::filesystem::path dir = std::filesystem::current_path();
+        for (int i = 0; i < 4; ++i) {
+            auto p = dir / ".env";
+            if (std::filesystem::exists(p)) {
+                env = parseEnvFile(p.string());
+                break;
+            }
+            if (!dir.has_parent_path()) break;
+            dir = dir.parent_path();
+        }
+    }
 
     cfg.api_key = getenvOr(env, "ASSEMBLYAI_API_KEY");
     cfg.hf_token = getenvOr(env, "HF_TOKEN");

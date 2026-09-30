@@ -26,6 +26,8 @@ file(GLOB_RECURSE CORE_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/diar/*.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/align/*.cpp"
 )
+# SessionController has no UI deps — the headless sim tool links it too.
+list(APPEND CORE_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/app/SessionController.cpp")
 
 add_library(speakerscope_core STATIC ${CORE_SOURCES})
 target_include_directories(speakerscope_core PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src")
@@ -41,8 +43,8 @@ endif()
 
 file(GLOB_RECURSE UI_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/ui/*.cpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/app/*.cpp"
 )
+list(APPEND UI_SOURCES "${CMAKE_CURRENT_SOURCE_DIR}/src/app/Application.cpp")
 
 add_executable(speakerscope ${UI_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cpp")
 target_link_libraries(speakerscope
@@ -57,6 +59,11 @@ if(WIN32)
     target_compile_definitions(speakerscope PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN _CRT_SECURE_NO_WARNINGS)
     target_compile_definitions(speakerscope_core PUBLIC _CRT_SECURE_NO_WARNINGS)
 endif()
+
+# Headless pipeline simulator: streams a wav through AssemblyAI for real,
+# optionally replaying gold diarization labels.
+add_executable(speakerscope_sim "${CMAKE_CURRENT_SOURCE_DIR}/src/sim/sim_main.cpp")
+target_link_libraries(speakerscope_sim PRIVATE speakerscope_core)
 
 if(SPEAKERSCOPE_BUILD_TESTS)
     enable_testing()
