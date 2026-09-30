@@ -19,6 +19,7 @@ private:
     AudioSourceType source_ = AudioSourceType::Microphone;
     std::string wav_path_ = "assets/samples/meeting.wav";
     char wav_buf_[512] = "assets/samples/meeting.wav";
+    std::string last_export_;
 };
 
 } // namespace ss

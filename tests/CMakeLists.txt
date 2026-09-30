@@ -5,6 +5,8 @@ add_executable(speakerscope_tests
     test_attributor.cpp
     test_transcript_buffer.cpp
     test_resolver.cpp
+    test_turn_path.cpp
+    test_turn_battery.cpp
 )
 
 target_link_libraries(speakerscope_tests

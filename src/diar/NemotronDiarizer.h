@@ -19,7 +19,11 @@ namespace ss {
 // the model can't load, it degrades to a no-op stub and isReady()==false.
 class NemotronDiarizer : public DiarizationEngine {
 public:
-    explicit NemotronDiarizer(std::string model_path);
+    // latency_profile: very_high | low | very_low | ultra_low | custom
+    // (custom reads SS_DIAR_CHUNK_LEN / SS_DIAR_RIGHT_CONTEXT env vars).
+    // Empty -> SS_DIAR_PROFILE env or "low".
+    explicit NemotronDiarizer(std::string model_path,
+                              std::string latency_profile = "");
     ~NemotronDiarizer() override;
 
     void pushAudio(const int16_t* samples, size_t count,

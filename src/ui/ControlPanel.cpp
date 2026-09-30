@@ -2,6 +2,8 @@
 
 #include <imgui.h>
 #include <cstring>
+#include <ctime>
+#include <filesystem>
 #include <fstream>
 
 #include "align/AttributedTranscript.h"
@@ -10,16 +12,49 @@
 #include "core/Config.h"
 #include "core/Logger.h"
 #include "ui/Theme.h"
+#include "ui/TranscriptView.h"
 
 namespace ss {
 
 namespace {
 
-void exportTranscript(SessionController& session) {
+std::string sanitizeFilename(const std::string& s) {
+    std::string out;
+    for (char c : s)
+        out += std::isalnum(static_cast<unsigned char>(c)) ? c : '_';
+    return out.empty() ? "speaker" : out;
+}
+
+// Writes exports/transcript-<ts>.txt (combined, speaker-attributed) plus one
+// transcript-<ts>-<name>.txt per seen speaker. Returns the directory used.
+std::string exportTranscript(SessionController& session) {
+    namespace fs = std::filesystem;
+    fs::create_directories("exports");
     AttributedTranscript doc(session.transcript(), session.timeline());
-    std::ofstream f("transcript_export.txt", std::ios::trunc);
-    f << doc.renderText(session.registry());
-    log()->info("Exported transcript to transcript_export.txt");
+    const auto segs = doc.snapshot();
+
+    char ts[32];
+    const std::time_t now = std::time(nullptr);
+    std::strftime(ts, sizeof ts, "%Y%m%d-%H%M%S", std::localtime(&now));
+    const std::string base = "exports/transcript-" + std::string(ts);
+
+    {
+        std::ofstream f(base + ".txt", std::ios::trunc);
+        f << doc.renderText(session.registry());
+    }
+    int per_person = 0;
+    for (int ch = 0; ch < kMaxSpeakers; ++ch) {
+        if (!session.registry().seen(ch)) continue;
+        std::ofstream f(base + "-" +
+                            sanitizeFilename(session.registry().name(ch)) +
+                            ".txt",
+                        std::ios::trunc);
+        f << TranscriptView::joinForCopy(segs, session.registry(), ch);
+        ++per_person;
+    }
+    log()->info("Exported {} (+ {} per-person files) to exports/",
+                base + ".txt", per_person);
+    return base;
 }
 
 } // namespace
@@ -73,9 +108,11 @@ void ControlPanel::render(SessionController& session, bool api_key_present) {
     ImGui::Spacing();
 
     ImGui::BeginDisabled(session.transcript().finalizedTurns().empty());
-    if (ImGui::Button("Export .txt", ImVec2(-1, 0)))
-        exportTranscript(session);
+    if (ImGui::Button("Export .txt (all + per person)", ImVec2(-1, 0)))
+        last_export_ = exportTranscript(session);
     ImGui::EndDisabled();
+    if (!last_export_.empty())
+        ImGui::TextDisabled("Saved: %s*.txt", last_export_.c_str());
 }
 
 } // namespace ss

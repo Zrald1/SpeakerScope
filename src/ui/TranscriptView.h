@@ -14,12 +14,13 @@ public:
     void render(const std::vector<AttributedSegment>& segments,
                 SpeakerRegistry& registry);
 
-private:
-    int filter_ = -1; // -1 = everyone, else channel index
-
+    // "[Name] text\n" per segment, optionally filtered to one channel.
     static std::string joinForCopy(
         const std::vector<AttributedSegment>& segs,
         const SpeakerRegistry& registry, int filter);
+
+private:
+    int filter_ = -1; // -1 = everyone, else channel index
 };
 
 } // namespace ss

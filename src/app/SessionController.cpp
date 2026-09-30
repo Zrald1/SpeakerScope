@@ -38,6 +38,7 @@ bool SessionController::start(const Config& cfg, AudioSourceType src,
     });
     diar_->setTurnCallback([this](const SpeakerTurn& t) {
         timeline_.addTurn(t);
+        registry_.noteActive(t.speaker);
     });
 
     stt_.connect(cfg, [this](const ServerEvent& ev) { onServerEvent(ev); });
@@ -117,16 +118,27 @@ void SessionController::senderLoop() {
 
 void SessionController::diarLoop() {
     std::vector<int16_t> chunk(kSampleRate); // up to 1 s per push
+    namespace sc = std::chrono;
+    const auto t_max = sc::steady_clock::time_point::max();
+    auto drain_start = t_max;
     // Drain on exit too — stop() must not strand queued audio that the model
-    // hasn't seen, or tail turns never materialize.
+    // hasn't seen, or tail turns never materialize. But bound it: CPU
+    // inference runs slower than realtime, so an unbounded drain froze the
+    // UI for minutes on stop. 8 s wall-clock cap, then drop the rest.
     while (true) {
         const size_t avail = ring_diar_.available();
-        if (avail == 0 && stop_.load()) break;
-        if (avail < kChunkSamples && !stop_.load()) {
+        if (stop_.load()) {
+            if (avail == 0) break;
+            if (drain_start == t_max) drain_start = sc::steady_clock::now();
+            if (sc::steady_clock::now() - drain_start > sc::seconds(8)) {
+                log()->warn("Diarization: dropping {} ms of unprocessed audio "
+                            "on stop", samplesToMs(avail));
+                break;
+            }
+        } else if (avail < kChunkSamples) {
             std::this_thread::sleep_for(std::chrono::milliseconds(20));
             continue;
         }
-        if (avail == 0) break;
         size_t got = ring_diar_.pop(chunk.data(), std::min(avail, chunk.size()));
         diar_->pushAudio(chunk.data(), got, samplesToMs(diar_samples_.load()));
         diar_samples_.fetch_add(got);

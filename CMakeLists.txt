@@ -98,9 +98,14 @@ endif()
 add_executable(speakerscope_sim "${CMAKE_CURRENT_SOURCE_DIR}/src/sim/sim_main.cpp")
 target_link_libraries(speakerscope_sim PRIVATE speakerscope_core)
 
+# Headless diarization throughput benchmark (no AssemblyAI, no pacing).
+add_executable(speakerscope_diar_bench
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/sim/diar_bench.cpp")
+target_link_libraries(speakerscope_diar_bench PRIVATE speakerscope_core)
+
 # Stage audiocpp.dll next to each runnable target.
 if(AUDIOCPP_DLL)
-    foreach(_t speakerscope speakerscope_sim)
+    foreach(_t speakerscope speakerscope_sim speakerscope_diar_bench)
         add_custom_command(TARGET ${_t} POST_BUILD
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
                 "${AUDIOCPP_DLL}" "$<TARGET_FILE_DIR:${_t}>")

@@ -47,6 +47,10 @@ int Application::run() {
         ImGui::BeginChild("right", ImVec2(0, 0), false);
         ImGui::TextUnformatted("SPEAKER ACTIVITY");
         ImGui::BeginChild("lanes", ImVec2(0, 150), true);
+        // Frame-fed engines don't fire the turn callback — mark channels seen
+        // from materialized turns so the person filter + count stay live.
+        for (const auto& t : session_.timeline().turns())
+            session_.registry().noteActive(t.speaker);
         lanes.render(session_.timeline(), session_.registry(),
                      session_.elapsedMs());
         ImGui::EndChild();

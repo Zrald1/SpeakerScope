@@ -39,7 +39,8 @@ struct NemotronDiarizer::Impl {
     std::set<std::tuple<int, int64_t, int64_t>> seen;  // turn dedup
 };
 
-NemotronDiarizer::NemotronDiarizer(std::string model_path)
+NemotronDiarizer::NemotronDiarizer(std::string model_path,
+                                   std::string latency_profile)
     : model_path_(std::move(model_path)), impl_(new Impl) {
 #ifdef SS_HAS_AUDIOCPP
     if (!std::filesystem::exists(model_path_)) {
@@ -65,9 +66,26 @@ NemotronDiarizer::NemotronDiarizer(std::string model_path)
         log()->error("Diarization: {}", status_);
         return;
     }
+    if (latency_profile.empty()) {
+        const char* env = std::getenv("SS_DIAR_PROFILE");
+        latency_profile = env && *env ? env : "custom";
+    }
     audiocpp_options* opts = audiocpp_options_create();
-    // Low-latency streaming profile: shorter lookahead, ~1 s turnaround.
-    audiocpp_options_set(opts, "nemotron_3_diar.latency_profile", "low");
+    audiocpp_options_set(opts, "nemotron_3_diar.latency_profile",
+                         latency_profile.c_str());
+    if (latency_profile == "custom") {
+        // Measured on a 12-core CPU (55.8 s wav, headless bench):
+        //   low:                0.53x realtime (chunk_len=9  — too chatty)
+        //   custom 20/4:        4.29x realtime
+        //   custom 40/4:        7.57x realtime  <- default: ~5 s label latency
+        //   very_high:         15.97x realtime (but turn quality degrades)
+        const char* cl = std::getenv("SS_DIAR_CHUNK_LEN");
+        const char* rc = std::getenv("SS_DIAR_RIGHT_CONTEXT");
+        audiocpp_options_set(opts, "nemotron_3_diar.chunk_len",
+                             cl && *cl ? cl : "40");
+        audiocpp_options_set(opts, "nemotron_3_diar.chunk_right_context",
+                             rc && *rc ? rc : "4");
+    }
     audiocpp_backend_config backend{};
     backend.backend = "cpu";
     backend.device = 0;
@@ -95,7 +113,8 @@ NemotronDiarizer::NemotronDiarizer(std::string model_path)
         return;
     }
     ready_ = true;
-    status_ = "nemotron-3-diarization live (audio.cpp, low latency)";
+    status_ = "nemotron-3-diarization live (audio.cpp, " + latency_profile +
+              ")";
     log()->info("Diarization: {}", status_);
 #else
     ready_ = std::filesystem::exists(model_path_);
